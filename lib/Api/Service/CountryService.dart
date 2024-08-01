@@ -3,15 +3,16 @@ import 'package:pr1/Constants/Constants.dart';
 import 'dart:convert';
 
 class CountryIndex {
-  Future<String> fetchData() async {
-    var response = await http.get(Uri.parse('${Constants.baseUrl}/countries'));
+  Future<ApiResponse> fetchData() async {
+    var response = await http.get(Uri.parse('${ApiUrl.baseUrl}country/'));
 
-    if (response.statusCode == 200) {
-      var decodedData = utf8.decode(response.bodyBytes);
-      return decodedData;
-    } else {
-      throw Exception('Failed to fetch data: ${response.statusCode}');
-    }
+    // Crea ApiResponse directamente al decodificar la respuesta
+    return ApiResponse.fromJsonString(
+      utf8.decode(response.bodyBytes),
+      response.statusCode,
+    );
   }
 }
+
+
 

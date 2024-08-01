@@ -3,21 +3,29 @@ import 'package:pr1/Api/Service/CountryService.dart';
 import 'dart:convert';
 
 class CountryCommand {
-  CountryIndex _CountryData;
+  CountryIndex _countryData;
 
-  CountryCommand(this._CountryData);
+  CountryCommand(this._countryData);
 
-  Future<CountryModel> execute() async {
-    // Change return type to Future<CountryModel>
+  Future<CountryModel?> execute() async {
     try {
-      var response = await _CountryData.fetchData();
-      var data = jsonDecode(response);
-      return CountryModel.fromJson(data);
+      var apiResponse = await _countryData.fetchData();
+
+      // Verifica el código de estado
+      if (apiResponse.statusCode == 200) {
+        // Si es 200, convierte el mapa JSON a un modelo
+        return CountryModel.fromJson(apiResponse.body);
+      } else {
+        // Si no es 200, lanza una excepción con el mensaje de error del mapa
+        throw Exception('Error: ${apiResponse.body['message']}');
+      }
     } catch (error) {
-      rethrow; // Re-lanzar la excepción para manejarla en la vista
+      // Captura y lanza de nuevo la excepción para manejarla más arriba si es necesario
+      rethrow;
     }
   }
 }
+
 
 
 

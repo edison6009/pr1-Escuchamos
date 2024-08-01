@@ -9,7 +9,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  CountryModel? _CountryData; // Changed "welcomeData" to "countryData"
+  CountryModel? _CountryData; // Datos del país
+  bool _isLoading = true; // Estado de carga
+  String? _selectedCountry; // País seleccionado
 
   @override
   void initState() {
@@ -18,15 +20,38 @@ class _HomeState extends State<Home> {
   }
 
   void _fetchData() async {
+    setState(() {
+      _isLoading = true; // Indicar que está cargando
+    });
+
     try {
-      // Assuming FetchDataCommand returns a CountryModel
       final countryData = await CountryCommand(CountryIndex()).execute();
       setState(() {
         _CountryData = countryData;
+        _isLoading = false; // Datos cargados
       });
     } catch (error) {
-      // Mostrar mensaje de error (opcional)
-      print('Error: $error');
+      setState(() {
+        _isLoading = false; // Detener el estado de carga
+      });
+      // Muestra un diálogo de alerta con el mensaje de error
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('No se pudo cargar la información: $error'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -37,29 +62,26 @@ class _HomeState extends State<Home> {
         title: Text('Página Home'),
       ),
       body: Center(
-        child: _CountryData != null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Países:'), // Changed "Welcome" to "Países"
-                  ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _CountryData?.countries?.length ?? 0,
-                    itemBuilder: (context, index) {
-                      final country = _CountryData?.countries?[index];
-                      if (country != null) {
-                        return Text(
-                          ' - ${country.name} ${country.dialingCode}',
-                          style: TextStyle(fontSize: 12),
-                        );
-                      }
-                      return SizedBox
-                          .shrink(); // Evitar espacios vacíos si no hay datos
+        child: _isLoading
+            ? CircularProgressIndicator() // Indicador de carga
+            : _CountryData != null
+                ? DropdownButton<String>(
+                    value: _selectedCountry,
+                    hint: Text('Seleccione un país'),
+                    items: _CountryData!.countries!.map((country) {
+                      return DropdownMenuItem<String>(
+                        value: country.dialingCode, // Usa el nombre correcto aquí
+                        child: Text('${country.name} (${country.dialingCode})'),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedCountry = newValue;
+                      });
                     },
-                  ),
-                ],
-              )
-            : CircularProgressIndicator(),
+                  )
+                : Text(
+                    'No se encontraron datos'), // Mensaje cuando no hay datos
       ),
     );
   }
